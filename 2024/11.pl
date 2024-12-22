@@ -3,11 +3,27 @@ use warnings;
 use feature qw/ say state /;
 use List::Util qw/ sum /;
 
-my $part = $ARGV[0] // 1;
-my $blinks = { 1 => 25, 2 => 75 }->{$part};
-my @input = map int, split q| |, <DATA>;
+use constant PART => $ARGV[0] // 1;
 
-say sum map blink($_, $blinks), @input;
+goto "PART_${\ PART}";
+
+PART_1: {
+    my $blinks = 25;
+    my @input = map int, split q| |, <DATA>;
+
+    say sum map blink($_, $blinks), @input;
+
+    exit 0;
+}
+
+PART_2: {
+    my $blinks = 75;
+    my @input = map int, split q| |, <DATA>;
+
+    say sum map blink($_, $blinks), @input;
+
+    exit 0;
+}
 
 sub blink {
     state %buffer;
