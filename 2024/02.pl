@@ -30,6 +30,44 @@ PART_1: {
     exit 0;
 }
 
+PART_2: {
+    sub check {
+        my @levels = @_;
+
+        for (my ($i, $change_buff) = (0); $i < @levels - 1; ++$i) {
+            my ($a, $b) = @levels[$i .. $i + 1]; 
+            my $change = $a - $b;
+
+            return (0, $i)
+                if abs $change > 3
+                || $change == 0
+                || defined $change_buff && $change lt 0 != $change_buff;
+
+            $change_buff = $change lt 0;
+        }
+
+        return (1, undef);
+    }
+
+    say sum map {
+        my @levels = map int, split /\s/;
+        my ($safe, $err) = check(@levels);
+
+        if ($safe) { 1 } else {
+            my $safe_dampended = 0;
+            for ($err - 1 .. $err + 1) {
+                next unless $_ >= 0;
+
+                ($safe_dampended, undef) = check(@levels[ 0 .. $_ - 1, $_ + 1 .. @levels - 1 ]);
+                last if $safe_dampended == 1;
+            }
+            $safe_dampended;
+        }
+    } <DATA>;
+
+    exit 0;
+}
+
 __DATA__
 45 47 48 50 51 52 54 51
 23 26 27 30 30
