@@ -38,6 +38,33 @@ PART_1: {
     exit 0;
 }
 
+PART_2: {
+    my @input = map { chomp; [split //] } <DATA>;
+    my $xmas = 0;
+
+    for my $y (0 .. $#input) {
+        for my $x (0 .. $#{$input[$y]}) {
+            my $char = $input[$y][$x]; 
+
+            next unless $char eq 'A';
+
+            my ($tr, $br, $bl, $tl) = (q<>) x 4;
+            $tr = $input[$y - 1][$x + 1] if $y > 0       && $x < $#{$input[$y]};
+            $br = $input[$y + 1][$x + 1] if $y < $#input && $x < $#{$input[$y]};
+            $bl = $input[$y + 1][$x - 1] if $y < $#input && $x > 0;
+            $tl = $input[$y - 1][$x - 1] if $y > 0       && $x > 0;
+
+            ++$xmas if
+                ($tl . $br) =~ / SM | MS /x
+             && ($tr . $bl) =~ / SM | MS /x;
+        }
+    }
+
+    say $xmas;
+
+    exit 0;
+}
+
 __DATA__
 SXMAXXMSSSMMXAMXAMXMMXXXAXMAAMAXXAMXMMAMXMASXMASXXSMMMAXXAMXAMASXMSMMMAASMSMMMXMASAXMAXAMXSAXXMXXMXSXMXAMXMXSSMXAMXSXMMSMMSMSASXXMXMMMXMMMMM
 SAMXSMXMAAAASMSMXSXAXASMSSMSSSXSSSMMSASMXMAMMXMASXMMXSAMMSMAMSAMAMXSAXMMXAAXAMAXSAMXMSXSXMXSAAXAXSMMAMSMSXSASAAMSSMMAMXXAAXXAAAMASMMASAMAAAX
