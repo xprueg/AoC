@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use List::Util qw/ pairmap sum /;
+use List::Util qw/ pairmap sum uniq /;
 use feature qw/ say postderef /;
 
 use constant PART => $ARGV[0] // 1;
@@ -15,30 +15,45 @@ PART_1: {
         last unless length;
 
         my ($lhs, $rhs) = split /\|/;
-        $page_ordering_rules{$rhs}{$lhs} = undef;
+        $page_ordering_rules{$lhs}{$rhs} = undef;
     }
 
     my $total = 0;
     LINE: while (<DATA>) {
         chomp;
 
-        my %seen;
         my @update = split /,/;
-        for (@update) {
-            my $page = $_;
-            $seen{$page} = undef;
+        my @sorted = sort { exists $page_ordering_rules{$b}{$a} ? 1 : -1 } @update;
+        my $equal = @update == grep { $update[$_] == $sorted[$_] } (0 .. $#update);
+        
+        $total += $sorted[ int @sorted / 2 ] if $equal;
+    }
 
-            my @rules = keys $page_ordering_rules{$page}->%*;
-            CHECK: for (@rules) {
-                my $rule = $_;
-                my $rule_exists_in_update = grep { /^${rule}$/ } @update;
+    say $total;
 
-                next CHECK unless $rule_exists_in_update;
-                next LINE unless exists $seen{$_};
-            }
-        }
+    exit 0;
+}
 
-        $total += $update[ int @update / 2 ];
+PART_2: {
+    my %page_ordering_rules;
+    while (<DATA>) {
+        chomp;
+
+        last unless length;
+
+        my ($lhs, $rhs) = split /\|/;
+        $page_ordering_rules{$lhs}{$rhs} = undef;
+    }
+
+    my $total = 0;
+    LINE: while (<DATA>) {
+        chomp;
+
+        my @update = split /,/;
+        my @sorted = sort { exists $page_ordering_rules{$b}{$a} ? 1 : -1 } @update;
+        my $equal = @update == grep { $update[$_] == $sorted[$_] } (0 .. $#update);
+        
+        $total += $sorted[ int @sorted / 2 ] unless $equal;
     }
 
     say $total;
