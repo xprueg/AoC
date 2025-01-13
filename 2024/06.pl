@@ -1,6 +1,7 @@
 use strict;
 use warnings;
 use feature qw/ say /;
+use Storable qw/ dclone /;
 
 use constant PART => $ARGV[0] // 1;
 
@@ -55,6 +56,103 @@ PART_1: {
     } 
 
     say scalar keys %seen;
+
+    exit 0;
+}
+
+sub loops {
+    my ($board, $guard) = @_;
+
+    my %seen;
+    STEP: for(;;) {
+        return 1 if exists $seen{$guard->{pos}}{$guard->{dir}};
+
+        ++$seen{$guard->{pos}}{$guard->{dir}};
+
+        my $peek_pos;
+        local $_ = $guard->{dir};
+        if (/\^/) {
+            $peek_pos = $guard->{pos} - $board->{width};
+            last STEP if $peek_pos < 0;
+        } elsif (/>/) {
+            $peek_pos = $guard->{pos} + 1;
+            last STEP if ($peek_pos != 0 && $peek_pos % $board->{width} == 0) || $peek_pos >= length $board->{buffer};
+        } elsif (/v/) {
+            $peek_pos = $guard->{pos} + $board->{width};
+            last STEP if $peek_pos >= length $board->{buffer};
+        } elsif (/</) {
+            $peek_pos = $guard->{pos} - 1;
+            last STEP if $guard->{pos} % $board->{width} < $peek_pos % $board->{width} || $peek_pos < 0;
+        }
+
+        my $peek = substr $board->{buffer}, $peek_pos, 1;
+        if ($peek eq '#') {
+            $guard->{dir} = {qw/ ^ >  > v  v <  < ^ /}->{$guard->{dir}};
+            redo STEP;
+        }
+
+        $guard->{pos} = $peek_pos;
+    } 
+
+    return 0;
+}
+
+PART_2: {
+    my %guard = ( pos => undef, dir => '^' );
+    my %board = ( buffer => q<>, width => undef, height => 0 );
+    for (<DATA>) {
+        chomp(my $line = $_);
+        $board{buffer} .= $line;
+
+        unless (defined $guard{pos}) {
+            my $x = index $line, '^';
+            if ($x != -1) {
+                $board{width} = length $line;
+                $guard{dir} = substr $line, $x, 1;
+                $guard{pos} = $board{width} * $board{height} + $x;
+            }
+        }
+
+        ++$board{height};
+    }
+
+    my $loop_count = 0;
+    my %seen;
+    STEP: for(;;) {
+        my $peek_pos;
+        ++$seen{$guard{pos}};
+
+        local $_ = $guard{dir};
+        if (/\^/) {
+            $peek_pos = $guard{pos} - $board{width};
+            last STEP if $peek_pos < 0;
+        } elsif (/>/) {
+            $peek_pos = $guard{pos} + 1;
+            last STEP if ($peek_pos != 0 && $peek_pos % $board{width} == 0) || $peek_pos >= length $board{buffer};
+        } elsif (/v/) {
+            $peek_pos = $guard{pos} + $board{width};
+            last STEP if $peek_pos >= length $board{buffer};
+        } elsif (/</) {
+            $peek_pos = $guard{pos} - 1;
+            last STEP if $guard{pos} % $board{width} < $peek_pos % $board{width} || $peek_pos < 0;
+        }
+
+        my $peek = substr $board{buffer}, $peek_pos, 1;
+        if ($peek eq '#') {
+            $guard{dir} = {qw/ ^ >  > v  v <  < ^ /}->{$guard{dir}};
+            redo STEP;
+        } else {
+            unless (exists $seen{$peek_pos}) {
+                my $loop_board = dclone(\%board);
+                substr $loop_board->{buffer}, $peek_pos, 1, '#';
+                ++$loop_count if loops($loop_board, dclone(\%guard));
+            }
+        }
+
+        $guard{pos} = $peek_pos;
+    } 
+
+    say $loop_count;
 
     exit 0;
 }
