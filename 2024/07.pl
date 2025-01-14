@@ -6,15 +6,20 @@ use constant PART => $ARGV[0] // 1;
 
 goto "PART_${\ PART}";
 
+sub add { $_[0] + $_[1] }
+sub mul { $_[0] * $_[1] }
+sub concat { int $_[0] . $_[1] }
 sub calibrate {
-    my ($total, $sum, $next, @numbers) = @_;
+    my ($operators, $total, $sum, $next, @numbers) = @_;
 
     return 0 if $sum > $total;
     return 1 if $total == $sum && !defined $next;
     return 0 unless defined $next;
 
-    return calibrate($total, $sum * $next, @numbers)
-        || calibrate($total, $sum + $next, @numbers);
+    return scalar grep { !!$_ } map {
+        my $op = $_;
+        calibrate($operators, $total, &$op($sum, $next), @numbers);
+    } @$operators;
 }
 
 PART_1: {
@@ -25,7 +30,23 @@ PART_1: {
         my @numbers = map { int } split /\s+/ => $numbers; 
 
         $calibration_result += $result
-            if calibrate(int $result, @numbers);
+            if calibrate([\&add, \&mul], int $result, @numbers);
+    }
+
+    say $calibration_result;
+
+    exit 0;
+}
+
+PART_2: {
+    my $calibration_result = 0;
+    while (<DATA>) {
+        chomp;
+        my ($result, $numbers) = split /: /;
+        my @numbers = map { int } split /\s+/ => $numbers; 
+
+        $calibration_result += $result
+            if calibrate([\&add, \&mul, \&concat], int $result, @numbers);
     }
 
     say $calibration_result;
