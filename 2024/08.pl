@@ -52,6 +52,69 @@ PART_1: {
     exit 0;
 }
 
+
+PART_2: {
+    my %antennas;
+    my ($width, $height) = (0, 0);
+    while (<DATA>) {
+        chomp;
+        $width = length() - 1;
+        for (my $x = 0; $x < length; ++$x) {
+            local $_ = substr $_, $x, 1;
+
+            next if /\./;
+            push $antennas{$_}->@* => { x => $x, y => $height };
+        }
+
+       ++$height unless eof DATA;
+    }
+
+    my %antinodes;
+    for my $antenna (keys %antennas) {
+        my @antennas = $antennas{$antenna}->@*;
+
+        next unless @antennas > 1;
+
+        for (my $j = 0; $j < @antennas; ++$j) {
+            my $a = $antennas[$j];
+
+            $antinodes{ $a->{x}, $a->{y} } = 1;
+
+            for (my $i = $j; $i < @antennas; ++$i) {
+                next if $j == $i;
+
+                my $b = $antennas[$i];
+
+                for (my ($x1, $y1) = ($a->{x}, $a->{y});;) {
+                    $x1 = $x1 - ($b->{x} - $a->{x});
+                    $y1 = $y1 - ($b->{y} - $a->{y});
+
+                    if ($x1 >= 0 && $x1 <= $width && $y1 >= 0 && $y1 <= $height) {
+                        $antinodes{ $x1, $y1 } = 1
+                    } else {
+                        last;
+                    }
+                }
+
+                for (my ($x1, $y1) = ($b->{x}, $b->{y});;) {
+                    $x1 = $x1 - ($a->{x} - $b->{x});
+                    $y1 = $y1 - ($a->{y} - $b->{y});
+
+                    if ($x1 >= 0 && $x1 <= $width && $y1 >= 0 && $y1 <= $height) {
+                        $antinodes{ $x1, $y1 } = 1
+                    } else {
+                        last;
+                    }
+                }
+            }
+        }
+    }
+
+    say scalar keys %antinodes;
+
+    exit 0;
+}
+
 __DATA__
 ..........M..........j.............y.....O........
 ...B...............q......m........lGO............
